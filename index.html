@@ -8,12 +8,12 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-/* Layout: tablero operativo — estado en vivo y alertas, 6 indicadores, matriz servicio × control, tendencia semanal y últimas cargas */
+/* Layout: tablero operativo — marca y filtros arriba, alertas, indicadores, comparativa entre períodos, matriz por servicio, tendencia y cargas */
 :root{
   --bg:#F2F4F3; --surface:#FFFFFF; --ink:#14201D; --muted:#5C6B67; --line:#D9E0DD;
-  --accent:#0F6B5C; --accent-soft:#E1EFEB;
+  --accent:#0F6B5C; --accent-soft:#E1EFEB; --brand:#007C35;
   --ok:#1E7B4C; --ok-bg:#E3F2E9; --warn:#9A6100; --warn-bg:#FBEFD6; --crit:#B3261E; --crit-bg:#F9E1DE; --nd:#7E8A86; --nd-bg:#ECEFEE;
-  --s1:#0F6B5C; --s2:#B4532A; --s3:#3E5BA9; --s4:#8A5A9E;
+  --s1:#0F6B5C; --s2:#B4532A; --s3:#3E5BA9; --s4:#8A5A9E; --p1:#0F6B5C; --p2:#B4532A;
   --f-display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
   --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
   --f-data:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
@@ -21,48 +21,66 @@
 }
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
   --bg:#0F1614; --surface:#17211E; --ink:#E6EEEB; --muted:#93A39E; --line:#2A3833;
-  --accent:#4FC2A8; --accent-soft:#183A33;
+  --accent:#4FC2A8; --accent-soft:#183A33; --brand:#3DB06A;
   --ok:#5BCB8C; --ok-bg:#163326; --warn:#E3AE4A; --warn-bg:#3A2C10; --crit:#F2877E; --crit-bg:#3D1A17; --nd:#6E7C78; --nd-bg:#222D2A;
-  --s1:#4FC2A8; --s2:#F0956A; --s3:#8FA8F0; --s4:#C79BDB;
+  --s1:#4FC2A8; --s2:#F0956A; --s3:#8FA8F0; --s4:#C79BDB; --p1:#4FC2A8; --p2:#F0956A;
   color-scheme:dark;
 }}
 :root[data-theme="dark"]{
   --bg:#0F1614; --surface:#17211E; --ink:#E6EEEB; --muted:#93A39E; --line:#2A3833;
-  --accent:#4FC2A8; --accent-soft:#183A33;
+  --accent:#4FC2A8; --accent-soft:#183A33; --brand:#3DB06A;
   --ok:#5BCB8C; --ok-bg:#163326; --warn:#E3AE4A; --warn-bg:#3A2C10; --crit:#F2877E; --crit-bg:#3D1A17; --nd:#6E7C78; --nd-bg:#222D2A;
-  --s1:#4FC2A8; --s2:#F0956A; --s3:#8FA8F0; --s4:#C79BDB;
+  --s1:#4FC2A8; --s2:#F0956A; --s3:#8FA8F0; --s4:#C79BDB; --p1:#4FC2A8; --p2:#F0956A;
   color-scheme:dark;
 }
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html,body{margin:0}
 body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);padding-inline:16px;padding-block:20px 48px}
 .wrap{max-width:1280px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr);gap:22px}
-[hidden]{display:none!important}
 h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance}
-h1{font-size:1.75rem;line-height:1.15;font-weight:700}
+h1{font-size:1.6rem;line-height:1.15;font-weight:700}
 h2{font-size:1.15rem;font-weight:600}
 .eyebrow{font:500 .72rem/1.3 var(--f-data);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-button,select{font:inherit;color:inherit}
+button,select,input{font:inherit;color:inherit}
 button{cursor:pointer}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
-header{display:flex;flex-wrap:wrap;gap:14px 24px;align-items:flex-end;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:16px}
-header .titles{display:grid;gap:6px;min-width:0}
-header .sub{color:var(--muted);font-size:.9rem}
+header{display:flex;flex-wrap:wrap;gap:14px 24px;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:16px}
+.brand{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;min-width:0}
+.brand-mark{display:flex;align-items:center;gap:10px;color:var(--brand);padding-right:16px;border-right:1px solid var(--line)}
+.brand-mark svg{width:46px;height:46px;flex:none}
+.brand-mark span{font:700 1.25rem/1 Arial,"Helvetica Neue",Helvetica,sans-serif;color:var(--ink);white-space:nowrap;letter-spacing:-.01em}
+.titles{display:grid;gap:4px;min-width:0}
 .hdr-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .chip{display:inline-flex;align-items:center;gap:7px;font:500 .78rem/1 var(--f-data);padding:7px 11px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--muted);white-space:nowrap}
 .chip .dot{width:8px;height:8px;border-radius:50%;background:var(--nd)}
 .chip.live .dot{background:var(--ok);animation:pulse 2s infinite}
 .chip.demo .dot{background:var(--warn)} .chip.err .dot{background:var(--crit)}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
-.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 12px;font-weight:500;font-size:.88rem;color:var(--ink)}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 12px;font-weight:500;font-size:.88rem;color:var(--ink);display:inline-flex;align-items:center;gap:6px}
 .btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.btn:disabled{opacity:.6;cursor:progress}
+.btn svg{width:15px;height:15px}
 
-.filters{display:flex;flex-wrap:wrap;gap:12px 18px;align-items:end}
+.filters{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:grid;gap:14px}
+.frow{display:flex;flex-wrap:wrap;gap:12px 16px;align-items:end}
+.fgroup{display:grid;grid-auto-flow:column;gap:8px 10px;align-items:end;padding-right:16px;border-right:1px solid var(--line);min-width:0}
+.fgroup .field{grid-row:2}
+.fgroup:last-child{border-right:0;padding-right:0}
+.fgroup-title{grid-column:1/-1;grid-row:1;font:600 .72rem/1 var(--f-data);letter-spacing:.06em;text-transform:uppercase;color:var(--ink);display:flex;align-items:center;gap:8px}
+.fgroup-title i{width:10px;height:10px;border-radius:2px;display:inline-block}
 .field{display:grid;gap:4px;min-width:0}
-.field label{font:500 .72rem/1 var(--f-data);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
-select{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:.92rem;max-width:100%}
-.period-note{color:var(--muted);font-size:.85rem;align-self:center}
+.field label{font:500 .7rem/1 var(--f-data);letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+select,input[type=date]{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 9px;font-size:.9rem;max-width:100%}
+.toggle{display:inline-flex;align-items:center;gap:8px;font-size:.9rem;cursor:pointer;user-select:none}
+.toggle input{width:16px;height:16px;accent-color:var(--accent)}
+.kpi-tabs{display:flex;flex-wrap:wrap;gap:6px}
+.kpi-tabs button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 11px;font:500 .8rem/1.2 var(--f-data)}
+.kpi-tabs button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.fnote{color:var(--muted);font-size:.84rem}
+.fbar{display:flex;flex-wrap:wrap;gap:8px 16px;justify-content:space-between;align-items:center;border-top:1px solid var(--line);padding-top:12px}
 
 .banner{padding:12px 14px;border-radius:8px;background:var(--warn-bg);border:1px solid var(--warn);color:var(--ink);font-size:.9rem;display:grid;gap:4px}
 .banner b{color:var(--warn)}
@@ -79,6 +97,7 @@ select{background:var(--surface);border:1px solid var(--line);border-radius:8px;
 .alert .body span{color:var(--muted);font-size:.88rem}
 
 .cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.cards.one{grid-template-columns:minmax(0,1fr)}
 @media (max-width:960px){.cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:600px){.cards{grid-template-columns:1fr}}
 .card{display:grid;gap:8px;align-content:start;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
@@ -88,6 +107,9 @@ select{background:var(--surface);border:1px solid var(--line);border-radius:8px;
 .card .val{font:500 2.1rem/1.05 var(--f-data);font-variant-numeric:tabular-nums}
 .card .val small{font-size:1rem;color:var(--muted);margin-left:2px}
 .card .meta{font-size:.82rem;color:var(--muted)}
+.cmp{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;font:500 .8rem/1.3 var(--f-data);color:var(--muted);border-top:1px dashed var(--line);padding-top:8px}
+.delta{font:600 .8rem/1.2 var(--f-data);white-space:nowrap}
+.delta.up{color:var(--ok)} .delta.down{color:var(--crit)} .delta.flat{color:var(--muted)}
 .stack{display:flex;height:8px;border-radius:4px;overflow:hidden;background:var(--nd-bg)}
 .stack i{display:block;height:100%}
 .stack .c{background:var(--ok)} .stack .p{background:var(--warn)} .stack .n{background:var(--crit)}
@@ -101,11 +123,18 @@ select{background:var(--surface);border:1px solid var(--line);border-radius:8px;
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:grid;gap:12px;min-width:0}
 .panel-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:8px 16px}
 .panel-head p{margin:0;color:var(--muted);font-size:.86rem}
+.periods{display:flex;flex-wrap:wrap;gap:6px 18px;font:500 .8rem/1.3 var(--f-data);color:var(--muted)}
+.periods span{display:inline-flex;align-items:center;gap:6px}
+.periods i{width:10px;height:10px;border-radius:2px;display:inline-block}
+.cmpgrid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:960px){.cmpgrid{grid-template-columns:minmax(0,1fr)}}
 .chartbox{position:relative;height:300px}
 .scroll{overflow-x:auto}
+.scroll.tall{max-height:520px;overflow:auto}
 table{border-collapse:collapse;width:100%;font-size:.86rem}
 th,td{padding:7px 9px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
-th{font:500 .7rem/1.25 var(--f-data);letter-spacing:.05em;text-transform:uppercase;color:var(--muted);vertical-align:bottom}
+th{font:500 .7rem/1.25 var(--f-data);letter-spacing:.05em;text-transform:uppercase;color:var(--muted);vertical-align:bottom;background:var(--surface)}
+.scroll.tall thead th{position:sticky;top:0;z-index:1}
 td.n,th.n{text-align:right;font-family:var(--f-data);font-variant-numeric:tabular-nums}
 td.ctr,th.ctr{text-align:center}
 tr.grp td{font:600 .72rem/1.2 var(--f-data);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--bg);padding-block:6px}
@@ -113,13 +142,17 @@ tr.grp td{font:600 .72rem/1.2 var(--f-data);letter-spacing:.08em;text-transform:
 .cell small{font-size:.66rem;font-weight:400;opacity:.85}
 .cell.ok{background:var(--ok-bg);color:var(--ok)} .cell.warn{background:var(--warn-bg);color:var(--warn)}
 .cell.crit{background:var(--crit-bg);color:var(--crit)} .cell.nd{background:transparent;color:var(--nd)}
+.vs{font:500 .84rem/1.2 var(--f-data);font-variant-numeric:tabular-nums;white-space:nowrap}
+.vs .a{color:var(--p1)} .vs .b{color:var(--p2)}
 .tag-v{font:600 .72rem/1 var(--f-data);padding:4px 7px;border-radius:5px;white-space:nowrap}
 .tag-v.C{background:var(--ok-bg);color:var(--ok)} .tag-v.P{background:var(--warn-bg);color:var(--warn)} .tag-v.N{background:var(--crit-bg);color:var(--crit)} .tag-v.X{color:var(--nd)}
 td.late{color:var(--crit);font-weight:600}
 .legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.8rem;color:var(--muted)}
 .legend span{display:inline-flex;align-items:center;gap:6px}
 .legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:10px 16px;border-radius:8px;font-size:.88rem;z-index:20;max-width:calc(100% - 32px)}
 footer{color:var(--muted);font-size:.8rem;display:grid;gap:4px;max-width:90ch}
+@media (max-width:700px){.fgroup{border-right:0;padding-right:0;grid-auto-flow:row;grid-template-columns:1fr 1fr}.fgroup .field{grid-row:auto}.fgroup .field:first-of-type{grid-column:1/-1}.brand-mark{border-right:0;padding-right:0}}
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
@@ -127,34 +160,79 @@ footer{color:var(--muted);font-size:.8rem;display:grid;gap:4px;max-width:90ch}
 <div class="wrap">
 
 <header>
-  <div class="titles">
-    <span class="eyebrow">CLISA Interior S.A. · PO-KPI-2026</span>
-    <h1>Registros de KPI por servicio</h1>
-    <span class="sub">Frío, cocción, limpieza (POES), reclamos y entregas de menús en plantas, hospitales y penitenciarías</span>
+  <div class="brand">
+    <div class="brand-mark" aria-label="Clisa Interior S.A.">
+      <svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="45.2" fill="none" stroke="currentColor" stroke-width="5.6"/><path d="M55 10.6A39.7 39.7 0 1 0 55 89.4A24.3 39.4 0 0 1 55 10.6Z" fill="currentColor"/><rect x="53.5" y="19" width="8.3" height="65.5" fill="currentColor"/></svg>
+      <span>Clisa Interior S.A.</span>
+    </div>
+    <div class="titles">
+      <span class="eyebrow">PO-KPI-2026 · Servicios OSEP</span>
+      <h1>Registros de KPI por servicio</h1>
+    </div>
   </div>
   <div class="hdr-actions">
     <span id="srcChip" class="chip"><span class="dot"></span><span id="srcText">Conectando…</span></span>
-    <button id="btnRefresh" class="btn" type="button">Actualizar ahora</button>
+    <button id="btnRefresh" class="btn" type="button">Actualizar</button>
   </div>
 </header>
 
 <div id="banner" class="banner" hidden></div>
 
 <section class="filters" aria-label="Filtros">
-  <div class="field"><label for="fPeriod">Período</label><select id="fPeriod"></select></div>
-  <div class="field"><label for="fTipo">Tipo de servicio</label>
-    <select id="fTipo"><option value="__all">Todos</option><option>Plantas</option><option>Hospitales</option><option>Penitenciarías</option></select></div>
-  <div class="field"><label for="fServ">Servicio</label><select id="fServ"></select></div>
-  <span id="periodNote" class="period-note"></span>
+  <div class="frow">
+    <div class="fgroup">
+      <span class="fgroup-title"><i style="background:var(--p1)"></i>Período 1</span>
+      <div class="field"><label for="p1Preset">Rango</label><select id="p1Preset"></select></div>
+      <div class="field"><label for="p1From">Desde</label><input type="date" id="p1From"></div>
+      <div class="field"><label for="p1To">Hasta</label><input type="date" id="p1To"></div>
+    </div>
+    <div class="fgroup">
+      <span class="fgroup-title"><label class="toggle"><input type="checkbox" id="cmpOn"> <i style="background:var(--p2)"></i>Comparar con período 2</label></span>
+      <div class="field"><label for="p2Preset">Rango</label><select id="p2Preset" disabled></select></div>
+      <div class="field"><label for="p2From">Desde</label><input type="date" id="p2From" disabled></div>
+      <div class="field"><label for="p2To">Hasta</label><input type="date" id="p2To" disabled></div>
+    </div>
+    <div class="fgroup">
+      <span class="fgroup-title">Servicios</span>
+      <div class="field"><label for="fTipo">Tipo</label>
+        <select id="fTipo"><option value="__all">Todos</option><option>Plantas</option><option>Hospitales</option><option>Penitenciarías</option></select></div>
+      <div class="field"><label for="fServ">Servicio</label><select id="fServ"></select></div>
+    </div>
+  </div>
+  <div class="frow">
+    <div class="field" style="flex:1 1 420px"><label>KPI</label><div class="kpi-tabs" id="kpiTabs" role="group" aria-label="Elegir KPI"></div></div>
+    <div class="field"><label for="fRes">Resultado (lista de cargas)</label>
+      <select id="fRes"><option value="__all">Todos</option><option value="C">Cumple</option><option value="P">Cumple parcialmente</option><option value="N">No cumple</option></select></div>
+  </div>
+  <div class="fbar">
+    <span id="periodNote" class="fnote"></span>
+    <div class="hdr-actions">
+      <button id="btnXlsx" class="btn" type="button"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2v8m0 0 3-3m-3 3L5 7M3 12v2h10v-2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Excel</button>
+      <button id="btnPdf" class="btn primary" type="button"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2v8m0 0 3-3m-3 3L5 7M3 12v2h10v-2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>PDF</button>
+    </div>
+  </div>
 </section>
 
 <div id="alerts" class="alerts" aria-live="polite"></div>
 
 <section class="cards" id="cards" aria-label="Indicadores"></section>
 
+<section class="panel" id="cmpPanel" hidden>
+  <div class="panel-head">
+    <h2>Comparativa entre períodos</h2>
+    <div class="periods" id="cmpPeriods"></div>
+  </div>
+  <div class="cmpgrid">
+    <div class="scroll"><table id="cmpTable"></table></div>
+    <div class="chartbox"><canvas id="cmpChart" aria-label="Comparación de indicadores entre períodos"></canvas></div>
+  </div>
+  <div class="panel-head"><h2 style="font-size:1rem">Por servicio</h2><p>Del período más antiguo al más reciente, con la variación en puntos porcentuales</p></div>
+  <div class="scroll"><table id="cmpServ"></table></div>
+</section>
+
 <section class="panel">
   <div class="panel-head">
-    <h2>Matriz por servicio</h2>
+    <h2>Matriz por servicio · Período 1</h2>
     <div class="legend">
       <span><i style="background:var(--ok-bg);border:1px solid var(--ok)"></i>En meta</span>
       <span><i style="background:var(--warn-bg);border:1px solid var(--warn)"></i>Bajo meta o con parciales</span>
@@ -166,32 +244,42 @@ footer{color:var(--muted);font-size:.8rem;display:grid;gap:4px;max-width:90ch}
 
 <section class="panel">
   <div class="panel-head">
-    <h2>Tendencia semanal</h2>
-    <p>Porcentaje de respuestas «Cumple» por semana. La línea punteada es la meta.</p>
+    <h2 id="trendTitle">Tendencia</h2>
+    <p>Porcentaje de respuestas «Cumple». La línea punteada es la meta.</p>
   </div>
-  <div class="chartbox"><canvas id="trend" aria-label="Porcentaje semanal de cumplimiento por control"></canvas></div>
+  <div class="chartbox"><canvas id="trend" aria-label="Tendencia de cumplimiento"></canvas></div>
 </section>
 
 <section class="panel">
-  <div class="panel-head"><h2>Últimas cargas del formulario</h2><p id="entriesNote"></p></div>
-  <div class="scroll"><table id="entries"></table></div>
+  <div class="panel-head"><h2>Cargas del Período 1</h2><p id="entriesNote"></p></div>
+  <div class="scroll tall"><table id="entries"></table></div>
 </section>
 
 <footer>
   <span id="srcDetail"></span>
-  <span>Controles 01, 02, 03 y 06: porcentaje de respuestas «Cumple» sobre el total del período. La celda va en rojo si hubo al menos un «No cumple», en amarillo si quedó bajo la meta o hubo «Cumple parcialmente».</span>
-  <span>Control 05: porcentaje de respuestas «Se responde el mismo día» entre las cargas que informaron reclamos o tiempo de respuesta.</span>
+  <span>Controles 01, 02, 03 y 06: porcentaje de respuestas «Cumple». La celda va en rojo si hubo al menos un «No cumple», en amarillo si quedó bajo la meta o hubo «Cumple parcialmente».</span>
+  <span>Control 06: si el repartidor cargó la entrega de un servicio en un día, cuenta su respuesta (la última de ese día) y la del formulario principal queda reemplazada.</span>
+  <span>Control 05: porcentaje de respuestas «Se responde el mismo día» entre las cargas que informaron tiempo de respuesta.</span>
+  <span>Comparativa: la variación se calcula del período más antiguo al más reciente.</span>
 </footer>
 </div>
+<div id="toast" class="toast" role="status" hidden></div>
 
 <script>
 /* ===================== CONFIGURACIÓN ===================== */
 const CONFIG = {
   SHEET: { id:'1FdyQrkXTx8joewGOQk9AIwvwVEdPuVlF00Ag-SSpfQ0', gid:'718673026' },
+  // Formulario del repartidor: solo Control 06. Por servicio y día, su respuesta reemplaza la del formulario principal.
+  SHEET_06: { id:'1zPdvpSuDPnZhUNg8wmXU0rZAq2hlV8RjZy0X1RlgpEI', gid:'' },
   REFRESH_SEC: 30,
-  META: 95,        // % de «Cumple» para los controles 01, 02, 03 y 06
-  META_RESP: 95,   // % de reclamos respondidos el mismo día
+  META: 95,         // % de «Cumple» para los controles 01, 02, 03 y 06
+  META_RESP: 95,    // % de reclamos respondidos el mismo día
   SIN_CARGA_DIAS: 7 // días sin cargar el formulario para avisar
+};
+const LIBS = {
+  xlsx:'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js',
+  jspdf:'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js',
+  autotable:'https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js'
 };
 const SERVICIOS = ['Planta Alpatacal','Planta Las Heras','Planta San Rafael','Hospital Central','Hospital Lagomaggiore','Hospital Lencinas',
   'Hospital Saporiti','Hospital Schestakow','Hospital El Carmen','Hospital Fleming','Penitenciaria Almafuerte','Penitenciaria San Felipe'];
@@ -202,10 +290,21 @@ const CTRL = [
   {id:'c03',code:'03',name:'Cronograma de limpieza (POES)',short:'Limpieza',key:['limpieza','poes']},
   {id:'c06',code:'06',name:'Entregas de menús en horario',short:'Entregas',key:['entregas']}
 ];
+// Los 6 KPI en el orden del formulario
+const KPIS = [
+  {id:'c01',code:'01',name:'Temperatura de unidades de frío',short:'Frío',type:'ctrl'},
+  {id:'c02',code:'02',name:'Temperatura de cocción',short:'Cocción',type:'ctrl'},
+  {id:'c03',code:'03',name:'Cronograma de limpieza (POES)',short:'Limpieza',type:'ctrl'},
+  {id:'c04',code:'04',name:'Reclamos recibidos',short:'Reclamos',type:'recl'},
+  {id:'c05',code:'05',name:'Velocidad de respuesta de reclamos',short:'Respuesta',type:'resp'},
+  {id:'c06',code:'06',name:'Entregas de menús en horario',short:'Entregas',type:'ctrl'}
+];
 const COLS = {ts:['marca temporal','timestamp'],serv:['servicio al que'],recl:['reclamos recibidos'],vel:['velocidad'],resp:['responsable']};
 
 const MES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-const S={rows:[],source:'',updated:null,error:null,period:null,tipo:'__all',serv:'__all',next:0,chart:null,loading:false,missing:[]};
+const S={rows:[],source:'',updated:null,error:null,tipo:'__all',serv:'__all',kpi:'__all',res:'__all',gran:'',
+  p1:{preset:'mes',from:'',to:''},p2:{preset:'anterior',from:'',to:''},cmp:false,
+  next:0,charts:{},loading:false,missing:[],missing06:[],err06:null};
 const $=id=>document.getElementById(id);
 const norm=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/\s+/g,' ').trim();
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -214,10 +313,15 @@ const pad=n=>String(n).padStart(2,'0');
 const dKey=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 const mKey=d=>dKey(d).slice(0,7);
 const dLabel=d=>`${pad(d.getDate())}/${pad(d.getMonth()+1)}`;
+const dFull=d=>`${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()}`;
 const tLabel=d=>`${dLabel(d)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
 const day0=d=>new Date(d.getFullYear(),d.getMonth(),d.getDate());
+const parseISO=s=>{const m=String(s||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);return m?new Date(+m[1],m[2]-1,+m[3]):null;};
+const addDays=(d,n)=>new Date(d.getFullYear(),d.getMonth(),d.getDate()+n);
 const tipoDe=s=>{const n=norm(s);return n.startsWith('planta')?'Plantas':n.startsWith('hospital')?'Hospitales':n.startsWith('penitenciar')?'Penitenciarías':'Otros';};
+const LV={C:'Cumple',P:'Cumple parcialmente',N:'No cumple'};
+const LVs={C:'Cumple',P:'Parcial',N:'No cumple'};
 
 /* ===================== LECTURA ===================== */
 function parseCSV(text){
@@ -251,8 +355,9 @@ const velocidad=v=>{const n=norm(v);if(!n)return null;if(n.includes('mismo dia')
 const reclamos=v=>{const n=norm(v);if(!n)return 0;if(/^(no|ninguno|sin|0)/.test(n))return 0;const m=n.match(/\d+/);return m?+m[0]:1;};
 
 async function fetchCSV(src){
-  const urls=[`https://docs.google.com/spreadsheets/d/${src.id}/gviz/tq?tqx=out:csv&gid=${src.gid}&headers=1&_=${Date.now()}`,
-              `https://docs.google.com/spreadsheets/d/${src.id}/export?format=csv&gid=${src.gid}&_=${Date.now()}`];
+  const g=src.gid?`&gid=${src.gid}`:'';
+  const urls=[`https://docs.google.com/spreadsheets/d/${src.id}/gviz/tq?tqx=out:csv${g}&headers=1&_=${Date.now()}`,
+              `https://docs.google.com/spreadsheets/d/${src.id}/export?format=csv${g}&_=${Date.now()}`];
   let last;
   for(const u of urls){
     try{const r=await fetch(u,{cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status);
@@ -274,11 +379,35 @@ function toRows(data){
   const rows=[];
   body.forEach((r,i)=>{const fecha=st[i];if(!fecha||isNaN(fecha))return;
     const g=c=>c<0?'':String(r[c]??'').trim();
-    const o={fecha,servicio:g(col.serv)||'Sin servicio',resp:g(col.resp),reclRaw:g(col.recl),velRaw:g(col.vel)};
+    let sv=g(col.serv)||'Sin servicio'; sv=SERVICIOS.find(x=>norm(x)===norm(sv))||sv;
+    const o={fecha,servicio:sv,resp:g(col.resp),reclRaw:g(col.recl),velRaw:g(col.vel),src:'main'};
     o.tipo=tipoDe(o.servicio); o.recl=reclamos(o.reclRaw); o.vel=velocidad(o.velRaw);
     CTRL.forEach(c=>{o[c.id+'Raw']=g(col[c.id]);o[c.id]=nivel(o[c.id+'Raw']);});
     rows.push(o);});
   return rows;
+}
+// Formulario del repartidor → filas que solo traen el Control 06
+function toRows06(data){
+  const H=data[0].map(norm);
+  const find=keys=>H.findIndex(h=>keys.some(k=>h.includes(k)));
+  const col={ts:Math.max(0,find(COLS.ts)),serv:find(['servicio']),c06:find(['entregas']),resp:find(['responsable','nombre','repartidor'])};
+  S.missing06=[col.serv<0?'Servicio':null,col.c06<0?'06-Entregas':null].filter(Boolean);
+  if(col.serv<0||col.c06<0) return [];
+  const body=data.slice(1), st=parseStamps(body.map(r=>r[col.ts])), out=[];
+  body.forEach((r,i)=>{const fecha=st[i];if(!fecha||isNaN(fecha))return;
+    const g=c=>c<0?'':String(r[c]??'').trim();
+    const v=nivel(g(col.c06)); let sv=g(col.serv); if(!v||!sv) return; sv=SERVICIOS.find(x=>norm(x)===norm(sv))||sv;
+    const o={fecha,servicio:sv,tipo:tipoDe(sv),resp:g(col.resp),reclRaw:'',velRaw:'',recl:0,vel:null,src:'rep'};
+    CTRL.forEach(c=>{o[c.id]=null;o[c.id+'Raw']='';});
+    o.c06=v;o.c06Raw=g(col.c06);out.push(o);});
+  return out;
+}
+// Por servicio y día: si hay respuesta del repartidor, cuenta solo la última de ese día y el 06 del formulario principal queda reemplazado
+function merge06(main,rep){
+  const k=x=>norm(x.servicio)+'|'+dKey(x.fecha);
+  const last={}; rep.forEach(x=>{const kk=k(x);if(!last[kk]||x.fecha>last[kk].fecha)last[kk]=x;});
+  main.forEach(x=>{x.src='main';if(last[k(x)]&&x.c06){x.c06Obs=x.c06;x.c06=null;}});
+  return main.concat(Object.values(last));
 }
 
 /* ===================== EJEMPLO (solo cuando no se puede leer la hoja) ===================== */
@@ -292,27 +421,57 @@ function demoRows(){
       const f=new Date(d.getFullYear(),d.getMonth(),d.getDate(),8+Math.floor(r()*10),Math.floor(r()*60));
       const recl=r()<.12?1+Math.floor(r()*2):0;
       const o={fecha:f,servicio:sv,tipo:tipoDe(sv),resp:'Responsable '+(i+1),recl,reclRaw:recl?String(recl):'',
-        vel:recl?(r()<.8?0:r()<.7?2:7):null};
+        vel:recl?(r()<.8?0:r()<.7?2:7):null,src:'main'};
       o.velRaw=o.vel==null?'':o.vel===0?'Se responde el mismo día':`Se responde a los ${o.vel} días`;
-      const base=i===4?.8:.95;
-      CTRL.forEach(c=>{const v=pick(c.id==='c06'?base-.05:base,.04);o[c.id]=v;o[c.id+'Raw']={C:'Cumple',P:'Cumple Parcialmente',N:'No Cumple'}[v];});
+      const base=i===4?.8:(d.getMonth()===end.getMonth()?.96:.92);
+      CTRL.forEach(c=>{const v=pick(c.id==='c06'?base-.05:base,.04);o[c.id]=v;o[c.id+'Raw']=LV[v];});
       rows.push(o);});
   }
   return rows;
 }
 
+/* ===================== PERÍODOS ===================== */
+function monthsInData(){return [...new Set(S.rows.map(r=>mKey(r.fecha)))].sort().reverse();}
+function presetRange(p,ref){
+  const t=day0(new Date());
+  if(p==='d7') return [addDays(t,-6),t];
+  if(p==='d30') return [addDays(t,-29),t];
+  if(p==='mes') return [new Date(t.getFullYear(),t.getMonth(),1),new Date(t.getFullYear(),t.getMonth()+1,0)];
+  if(p==='mesant') return [new Date(t.getFullYear(),t.getMonth()-1,1),new Date(t.getFullYear(),t.getMonth(),0)];
+  if(p==='todo'){ if(!S.rows.length) return [t,t]; const ds=S.rows.map(r=>day0(r.fecha)); return [new Date(Math.min(...ds)),new Date(Math.max(...ds))]; }
+  if(p.startsWith('m:')){const [y,m]=p.slice(2).split('-').map(Number);return [new Date(y,m-1,1),new Date(y,m,0)];}
+  // Período 2 relativo al período 1
+  if(ref){const [a,b]=ref, n=Math.round((b-a)/864e5)+1;
+    if(p==='anterior'){ const fullMonth=a.getDate()===1&&addDays(b,1).getDate()===1;
+      return fullMonth?[new Date(a.getFullYear(),a.getMonth()-1,1),new Date(a.getFullYear(),a.getMonth(),0)]:[addDays(a,-n),addDays(a,-1)]; }
+    if(p==='siguiente'){ const fullMonth=a.getDate()===1&&addDays(b,1).getDate()===1;
+      return fullMonth?[new Date(a.getFullYear(),a.getMonth()+1,1),new Date(a.getFullYear(),a.getMonth()+2,0)]:[addDays(b,1),addDays(b,n)]; }
+    if(p==='anioant') return [new Date(a.getFullYear()-1,a.getMonth(),a.getDate()),new Date(b.getFullYear()-1,b.getMonth(),b.getDate())];
+  }
+  return null;
+}
+function fillPresets(){
+  const months=monthsInData().map(m=>`<option value="m:${m}">${MES[+m.slice(5)-1]} ${m.slice(0,4)}</option>`).join('');
+  const base='<option value="d7">Últimos 7 días</option><option value="d30">Últimos 30 días</option><option value="mes">Mes actual</option><option value="mesant">Mes anterior</option>';
+  $('p1Preset').innerHTML=base+(months?`<optgroup label="Meses con datos">${months}</optgroup>`:'')+'<option value="todo">Todo</option><option value="custom">Personalizado</option>';
+  $('p2Preset').innerHTML='<option value="anterior">Período anterior</option><option value="siguiente">Período siguiente</option><option value="anioant">Mismo período del año anterior</option>'+
+    (months?`<optgroup label="Meses con datos">${months}</optgroup>`:'')+'<option value="custom">Personalizado</option>';
+  $('p1Preset').value=S.p1.preset; $('p2Preset').value=S.p2.preset;
+}
+function syncDates(){
+  if(S.p1.preset!=='custom'){const r=presetRange(S.p1.preset);if(r){S.p1.from=dKey(r[0]);S.p1.to=dKey(r[1]);}}
+  const r1=range(S.p1);
+  if(S.p2.preset!=='custom'){const r=presetRange(S.p2.preset,r1);if(r){S.p2.from=dKey(r[0]);S.p2.to=dKey(r[1]);}}
+  $('p1From').value=S.p1.from;$('p1To').value=S.p1.to;$('p2From').value=S.p2.from;$('p2To').value=S.p2.to;
+  ['p2Preset','p2From','p2To'].forEach(id=>$(id).disabled=!S.cmp);
+}
+function range(p){let a=parseISO(p.from),b=parseISO(p.to);if(!a&&!b){const t=day0(new Date());return [t,t];}a=a||b;b=b||a;if(a>b)[a,b]=[b,a];return [a,b];}
+const rangeText=r=>`${dFull(r[0])} al ${dFull(r[1])}`;
+const inRange=(rows,r)=>rows.filter(x=>x.fecha>=r[0]&&x.fecha<addDays(r[1],1));
+
 /* ===================== CÁLCULO ===================== */
-function inPeriod(rows){
-  const p=S.period,t=day0(new Date());
-  if(!p||p==='all') return rows;
-  if(p==='d7') return rows.filter(x=>x.fecha>=new Date(t.getTime()-6*864e5));
-  if(p==='d30') return rows.filter(x=>x.fecha>=new Date(t.getTime()-29*864e5));
-  if(p.startsWith('m:')) return rows.filter(x=>mKey(x.fecha)===p.slice(2));
-  return rows;
-}
-function scope(rows){
-  return rows.filter(x=>(S.tipo==='__all'||x.tipo===S.tipo)&&(S.serv==='__all'||x.servicio===S.serv));
-}
+function scope(rows){return rows.filter(x=>(S.tipo==='__all'||x.tipo===S.tipo)&&(S.serv==='__all'||x.servicio===S.serv));}
+function servList(){return [...new Set([...SERVICIOS,...S.rows.map(r=>r.servicio)])].filter(s=>(S.tipo==='__all'||tipoDe(s)===S.tipo)&&(S.serv==='__all'||s===S.serv));}
 function ctrlStat(xs,id){
   const v=xs.map(x=>x[id]).filter(Boolean);
   const C=v.filter(x=>x==='C').length,P=v.filter(x=>x==='P').length,N=v.filter(x=>x==='N').length,n=v.length;
@@ -329,115 +488,383 @@ function respStat(xs){
     st:pct==null?'nd':none>0?'crit':pct<CONFIG.META_RESP?'warn':'ok',
     pill:pct==null?'nd':none>0?'crit':pct>=CONFIG.META_RESP?'ok':'warn'};
 }
-const ST={ok:'En meta',warn:'Revisar',crit:'Fuera de meta',nd:'Sin datos'};
+// Valor de un KPI sobre un conjunto de cargas: {v, unit, pill, txt, detail}
+function kpiVal(k,xs){
+  if(k.type==='ctrl'){const s=ctrlStat(xs,k.id);return {v:s.pct,unit:'%',pill:s.pill,st:s.st,s,txt:s.pct==null?'—':fmt(s.pct,1)+' %',
+    detail:`${s.C} cumple · ${s.P} parcial · ${s.N} no cumple`,meta:`mín. ${CONFIG.META} %`};}
+  if(k.type==='resp'){const s=respStat(xs);return {v:s.pct,unit:'%',pill:s.pill,st:s.st,s,txt:s.pct==null?'—':fmt(s.pct,1)+' %',
+    detail:`${s.same} mismo día · ${s.d2} a 2 días · ${s.d7} a 7 días · ${s.none} sin respuesta`,meta:`mín. ${CONFIG.META_RESP} % el mismo día`};}
+  const tot=xs.filter(x=>x.src!=='rep').reduce((a,x)=>a+x.recl,0), serv=new Set(xs.filter(x=>x.recl>0).map(x=>x.servicio));
+  return {v:tot,unit:'',pill:tot?'warn':'ok',st:tot?'warn':'ok',s:{tot,serv},txt:String(tot),detail:`en ${serv.size} ${serv.size===1?'servicio':'servicios'}`,meta:'menos es mejor',lower:true};
+}
+// Variación cronológica: valor del período más reciente menos el del más antiguo
+function variation(k,v1,v2,r1,r2){
+  if(v1==null||v2==null) return null;
+  const p2Later=r2[0]>r1[0];
+  const d=p2Later?v2-v1:v1-v2;
+  const better=k.type==='recl'?d<0:d>0, worse=k.type==='recl'?d>0:d<0;
+  return {d,cls:Math.abs(d)<0.05?'flat':better?'up':worse?'down':'flat',
+    txt:Math.abs(d)<0.05?'sin cambio':`${d>0?'+':'−'}${k.type==='recl'?Math.abs(d):fmt(Math.abs(d),1)+' pp'}`,
+    txtPdf:Math.abs(d)<0.05?'sin cambio':`${d>0?'+':'-'}${k.type==='recl'?Math.abs(d):fmt(Math.abs(d),1)+' pp'}`};
+}
+const visibleKpis=()=>S.kpi==='__all'?KPIS:KPIS.filter(k=>k.id===S.kpi);
+function resFilter(xs){
+  if(S.res==='__all') return xs;
+  const ids=S.kpi==='__all'?CTRL.map(c=>c.id):(CTRL.some(c=>c.id===S.kpi)?[S.kpi]:[]);
+  if(!ids.length) return xs;
+  return xs.filter(x=>ids.some(id=>x[id]===S.res));
+}
+function alertsFor(xs,all){
+  const al=[], lim=(arr,n=6)=>arr.slice(0,n).join('<br>')+(arr.length>n?`<br>y ${arr.length-n} más`:'');
+  const vis=visibleKpis().map(k=>k.id);
+  const ctrls=CTRL.filter(c=>vis.includes(c.id));
+  const nc=xs.flatMap(x=>ctrls.filter(c=>x[c.id]==='N').map(c=>({x,c}))).sort((a,b)=>b.x.fecha-a.x.fecha);
+  const items=[];
+  if(nc.length) items.push({c:'crit',tag:'NO CUMPLE',t:`${nc.length} ${nc.length===1?'control marcado':'controles marcados'} «No cumple». Pedir la acción correctiva al responsable del servicio.`,
+    list:nc.map(({x,c})=>`${dLabel(x.fecha)} · ${x.servicio} · ${c.code} ${c.short}${x.src==='rep'?' (repartidor)':''}${x.resp?' ('+x.resp+')':''}`)});
+  if(vis.includes('c05')){const nr=xs.filter(x=>x.vel===99).sort((a,b)=>b.fecha-a.fecha);
+    if(nr.length) items.push({c:'crit',tag:'RECLAMOS',t:`${nr.length} ${nr.length===1?'carga informa':'cargas informan'} reclamos sin responder.`,list:nr.map(x=>`${dLabel(x.fecha)} · ${x.servicio}`)});}
+  const pc=xs.flatMap(x=>ctrls.filter(c=>x[c.id]==='P').map(c=>({x,c})));
+  if(pc.length){const by={};pc.forEach(({x,c})=>{(by[x.servicio]??=[]).push(c.short);});
+    items.push({c:'warn',tag:'PARCIAL',t:`${pc.length} ${pc.length===1?'control':'controles'} con «Cumple parcialmente».`,
+      list:Object.entries(by).sort((a,b)=>b[1].length-a[1].length).map(([s,l])=>`${s}: ${l.length} (${[...new Set(l)].join(', ')})`)});}
+  const now=new Date();
+  const lastBy=s=>{const r=all.filter(x=>x.servicio===s&&x.src!=='rep');return r.length?r.reduce((a,x)=>x.fecha>a?x.fecha:a,r[0].fecha):null;};
+  const late=servList().map(s=>({s,l:lastBy(s)})).filter(o=>!o.l||(now-o.l)/864e5>CONFIG.SIN_CARGA_DIAS);
+  if(late.length) items.push({c:'warn',tag:'SIN CARGA',t:`${late.length} ${late.length===1?'servicio no carga':'servicios no cargan'} el formulario hace más de ${CONFIG.SIN_CARGA_DIAS} días.`,
+    list:late.map(o=>`${o.s}: ${o.l?'última carga '+dLabel(o.l):'sin cargas'}`)});
+  if(!items.length) items.push({c:'ok',tag:'OK',t:'Sin desvíos en el período seleccionado.',list:['Todos los controles cumplen y todos los servicios cargaron el formulario.']});
+  items.forEach(i=>i.html=lim(i.list.map(esc)));
+  return {items,lastBy};
+}
+
+/* ===================== ESTADO CALCULADO (lo usan pantalla, Excel y PDF) ===================== */
+function compute(){
+  const all=scope(S.rows), r1=range(S.p1), r2=S.cmp?range(S.p2):null;
+  const x1=inRange(all,r1), x2=r2?inRange(all,r2):null;
+  return {all,r1,r2,x1,x2,kpis:visibleKpis(),servs:servList(),alerts:alertsFor(x1,all)};
+}
 
 /* ===================== RENDER ===================== */
 function buildFilters(){
-  const months=[...new Set(S.rows.map(r=>mKey(r.fecha)))].sort().reverse();
-  $('fPeriod').innerHTML='<option value="d7">Últimos 7 días</option><option value="d30">Últimos 30 días</option>'+
-    months.map(m=>`<option value="m:${m}">${MES[+m.slice(5)-1]} ${m.slice(0,4)}</option>`).join('')+'<option value="all">Todo</option>';
-  if(!S.period||![...$('fPeriod').options].some(o=>o.value===S.period)){const cur=mKey(new Date());S.period=months.includes(cur)?'m:'+cur:(months[0]?'m:'+months[0]:'all');}
-  $('fPeriod').value=S.period;
+  fillPresets(); syncDates();
   const servs=[...new Set([...SERVICIOS,...S.rows.map(r=>r.servicio)])].filter(s=>S.tipo==='__all'||tipoDe(s)===S.tipo);
   $('fServ').innerHTML='<option value="__all">Todos los servicios</option>'+servs.map(s=>`<option>${esc(s)}</option>`).join('');
   if(S.serv!=='__all'&&!servs.includes(S.serv))S.serv='__all';
-  $('fServ').value=S.serv; $('fTipo').value=S.tipo;
+  $('fServ').value=S.serv; $('fTipo').value=S.tipo; $('cmpOn').checked=S.cmp; $('fRes').value=S.res;
+  $('kpiTabs').innerHTML=`<button type="button" data-k="__all" aria-pressed="${S.kpi==='__all'}">Todos</button>`+
+    KPIS.map(k=>`<button type="button" data-k="${k.id}" aria-pressed="${S.kpi===k.id}">${k.code} ${k.short}</button>`).join('');
+  $('kpiTabs').querySelectorAll('button').forEach(b=>b.onclick=()=>{S.kpi=b.dataset.k;buildFilters();render();});
+  $('fRes').disabled=S.kpi==='c04'||S.kpi==='c05';
 }
 
 function render(){
-  const all=scope(S.rows), xs=inPeriod(all);
-  const servsScope=[...new Set([...SERVICIOS,...S.rows.map(r=>r.servicio)])].filter(s=>(S.tipo==='__all'||tipoDe(s)===S.tipo)&&(S.serv==='__all'||s===S.serv));
-  const withData=new Set(xs.map(x=>x.servicio));
-  $('periodNote').textContent=`${xs.length} ${xs.length===1?'carga':'cargas'} · ${withData.size} de ${servsScope.length} servicios cargaron`;
+  const D=compute(), {x1,x2,r1,r2,kpis}=D;
+  const xm=x1.filter(x=>x.src!=='rep'), nRep=x1.length-xm.length, withData=new Set(xm.map(x=>x.servicio));
+  $('periodNote').textContent=`Período 1: ${rangeText(r1)} · ${xm.length} ${xm.length===1?'carga':'cargas'}${nRep?` + ${nRep} del repartidor`:''} · ${withData.size} de ${D.servs.length} servicios cargaron`+
+    (r2?` · Período 2: ${rangeText(r2)} · ${x2.filter(x=>x.src!=='rep').length} cargas`:'');
 
   // Tarjetas
-  const cards=CTRL.map(c=>{const s=ctrlStat(xs,c.id);const w=k=>s.n?s[k]/s.n*100:0;
-    return `<article class="card"><div class="top"><span class="eyebrow">Control ${c.code}</span><span class="pill ${s.pill}">${ST[s.pill]}</span></div>
-      <div class="name">${c.name}</div>
-      <div class="valrow"><span class="val">${fmt(s.pct,1)}<small>${s.pct==null?'':'%'}</small></span><span class="meta">cumple · Meta ≥ ${CONFIG.META} %</span></div>
-      <div class="stack" role="img" aria-label="${s.C} cumple, ${s.P} parcial, ${s.N} no cumple"><i class="c" style="width:${w('C')}%"></i><i class="p" style="width:${w('P')}%"></i><i class="n" style="width:${w('N')}%"></i></div>
-      <div class="counts"><span class="c"><b>${s.C}</b> cumple</span><span class="p"><b>${s.P}</b> parcial</span><span class="n"><b>${s.N}</b> no cumple</span></div></article>`;});
-  const recl=xs.reduce((a,x)=>a+x.recl,0), conRecl=new Set(xs.filter(x=>x.recl>0).map(x=>x.servicio));
-  cards.splice(3,0,`<article class="card"><div class="top"><span class="eyebrow">Control 04</span><span class="pill ${recl?'warn':'ok'}">${recl?'Con reclamos':'Sin reclamos'}</span></div>
-    <div class="name">Reclamos recibidos</div>
-    <div class="valrow"><span class="val">${recl}</span><span class="meta">reclamos en ${conRecl.size} ${conRecl.size===1?'servicio':'servicios'}</span></div>
-    <div class="counts">${[...conRecl].slice(0,4).map(s=>`<span>${esc(s)}: <b>${xs.filter(x=>x.servicio===s).reduce((a,x)=>a+x.recl,0)}</b></span>`).join('')||'<span>Ningún servicio informó reclamos</span>'}</div></article>`);
-  const r5=respStat(xs);const w5=k=>r5.n?r5[k]/r5.n*100:0;
-  cards.splice(4,0,`<article class="card"><div class="top"><span class="eyebrow">Control 05</span><span class="pill ${r5.pill}">${ST[r5.pill]}</span></div>
-    <div class="name">Velocidad de respuesta de reclamos</div>
-    <div class="valrow"><span class="val">${fmt(r5.pct,1)}<small>${r5.pct==null?'':'%'}</small></span><span class="meta">el mismo día · Meta ≥ ${CONFIG.META_RESP} %</span></div>
-    <div class="stack" role="img" aria-label="tiempos de respuesta"><i class="c" style="width:${w5('same')}%"></i><i class="p" style="width:${w5('d2')+w5('d7')}%"></i><i class="n" style="width:${w5('none')}%"></i></div>
-    <div class="counts"><span class="c"><b>${r5.same}</b> mismo día</span><span class="p"><b>${r5.d2}</b> 2 días</span><span class="p"><b>${r5.d7}</b> 7 días</span><span class="n"><b>${r5.none}</b> sin respuesta</span></div></article>`);
-  $('cards').innerHTML=cards.join('');
+  $('cards').className='cards'+(kpis.length===1?' one':'');
+  $('cards').innerHTML=kpis.map(k=>{
+    const a=kpiVal(k,x1), b=r2?kpiVal(k,x2):null, w=t=>a.s.n?a.s[t]/a.s.n*100:0;
+    let bar='',counts='';
+    if(k.type==='ctrl'){bar=`<div class="stack" role="img" aria-label="${a.detail}"><i class="c" style="width:${w('C')}%"></i><i class="p" style="width:${w('P')}%"></i><i class="n" style="width:${w('N')}%"></i></div>`;
+      counts=`<div class="counts"><span class="c"><b>${a.s.C}</b> cumple</span><span class="p"><b>${a.s.P}</b> parcial</span><span class="n"><b>${a.s.N}</b> no cumple</span></div>`;}
+    else if(k.type==='resp'){const s=a.s;bar=`<div class="stack" role="img" aria-label="${a.detail}"><i class="c" style="width:${w('same')}%"></i><i class="p" style="width:${w('d2')+w('d7')}%"></i><i class="n" style="width:${w('none')}%"></i></div>`;
+      counts=`<div class="counts"><span class="c"><b>${s.same}</b> mismo día</span><span class="p"><b>${s.d2}</b> 2 días</span><span class="p"><b>${s.d7}</b> 7 días</span><span class="n"><b>${s.none}</b> sin respuesta</span></div>`;}
+    else{const by=[...a.s.serv].map(s=>[s,x1.filter(x=>x.servicio===s).reduce((t,x)=>t+x.recl,0)]).sort((p,q)=>q[1]-p[1]);
+      counts=`<div class="counts">${by.slice(0,4).map(([s,n])=>`<span>${esc(s)}: <b>${n}</b></span>`).join('')||'<span>Ningún servicio informó reclamos</span>'}</div>`;}
+    const pillTxt=k.type==='recl'?(a.v?'Con reclamos':'Sin reclamos'):{ok:'En meta',warn:'Revisar',crit:'Fuera de meta',nd:'Sin datos'}[a.pill];
+    let cmp='';
+    if(b){const vr=variation(k,a.v,b.v,r1,r2);cmp=`<div class="cmp"><span>Período 2: <b style="color:var(--p2)">${b.txt}</b></span>${vr?`<span class="delta ${vr.cls}">${vr.txt}</span>`:''}</div>`;}
+    return `<article class="card"><div class="top"><span class="eyebrow">Control ${k.code}</span><span class="pill ${a.pill}">${pillTxt}</span></div>
+      <div class="name">${k.name}</div>
+      <div class="valrow"><span class="val">${a.v==null?'—':k.type==='recl'?a.v:fmt(a.v,1)}<small>${a.v==null||k.type==='recl'?'':'%'}</small></span><span class="meta">${k.type==='recl'?a.detail:k.type==='resp'?'el mismo día · '+a.meta:'cumple · '+a.meta}</span></div>
+      ${bar}${counts}${cmp}</article>`;}).join('');
 
   // Alertas
-  const al=[], lim=(arr,n=6)=>arr.slice(0,n).join('<br>')+(arr.length>n?`<br>y ${arr.length-n} más`:'');
-  const nc=xs.flatMap(x=>CTRL.filter(c=>x[c.id]==='N').map(c=>({x,c}))).sort((a,b)=>b.x.fecha-a.x.fecha);
-  if(nc.length) al.push({c:'crit',tag:'NO CUMPLE',t:`${nc.length} ${nc.length===1?'control marcado':'controles marcados'} «No cumple». Pedir la acción correctiva al responsable del servicio.`,
-    s:lim(nc.map(({x,c})=>`${dLabel(x.fecha)} · ${esc(x.servicio)} · ${c.code} ${c.short}${x.resp?' ('+esc(x.resp)+')':''}`))});
-  const nr=xs.filter(x=>x.vel===99);
-  if(nr.length) al.push({c:'crit',tag:'RECLAMOS',t:`${nr.length} ${nr.length===1?'carga informa':'cargas informan'} reclamos sin responder.`,
-    s:lim(nr.sort((a,b)=>b.fecha-a.fecha).map(x=>`${dLabel(x.fecha)} · ${esc(x.servicio)}`))});
-  const pc=xs.flatMap(x=>CTRL.filter(c=>x[c.id]==='P').map(c=>({x,c})));
-  if(pc.length){const by={};pc.forEach(({x,c})=>{const k=x.servicio;(by[k]??=[]).push(c.short);});
-    al.push({c:'warn',tag:'PARCIAL',t:`${pc.length} ${pc.length===1?'control':'controles'} con «Cumple parcialmente».`,
-      s:lim(Object.entries(by).sort((a,b)=>b[1].length-a[1].length).map(([s,l])=>`${esc(s)}: ${l.length} (${[...new Set(l)].join(', ')})`))});}
-  const now=new Date();
-  const lastBy=s=>{const r=all.filter(x=>x.servicio===s);return r.length?r.reduce((a,x)=>x.fecha>a?x.fecha:a,r[0].fecha):null;};
-  const late=servsScope.map(s=>({s,l:lastBy(s)})).filter(o=>!o.l||(now-o.l)/864e5>CONFIG.SIN_CARGA_DIAS);
-  if(late.length) al.push({c:'warn',tag:'SIN CARGA',t:`${late.length} ${late.length===1?'servicio no carga':'servicios no cargan'} el formulario hace más de ${CONFIG.SIN_CARGA_DIAS} días.`,
-    s:lim(late.map(o=>`${esc(o.s)}: ${o.l?'última carga '+dLabel(o.l):'sin cargas'}`))});
-  if(!al.length) al.push({c:'ok',tag:'OK',t:'Sin desvíos en el período seleccionado.',s:'Todos los controles cumplen y todos los servicios cargaron el formulario.'});
-  $('alerts').innerHTML=al.map(a=>`<div class="alert ${a.c}"><span class="tag">${a.tag}</span><div class="body"><strong>${a.t}</strong><span>${a.s}</span></div></div>`).join('');
+  $('alerts').innerHTML=D.alerts.items.map(a=>`<div class="alert ${a.c}"><span class="tag">${a.tag}</span><div class="body"><strong>${esc(a.t)}</strong><span>${a.html}</span></div></div>`).join('');
 
-  // Matriz
-  const groups=['Plantas','Hospitales','Penitenciarías','Otros'];
-  const cellC=s=>s.n?`<span class="cell ${s.st}" title="${s.C} cumple · ${s.P} parcial · ${s.N} no cumple">${fmt(s.pct)} %<small>${s.N?s.N+' NC':s.P?s.P+' parc.':s.n+' cargas'}</small></span>`:'<span class="cell nd">—</span>';
-  let body='';
-  groups.forEach(g=>{const ss=servsScope.filter(s=>tipoDe(s)===g);if(!ss.length)return;
-    body+=`<tr class="grp"><td colspan="${CTRL.length+6}">${g}</td></tr>`;
-    ss.forEach(sv=>{const rx=xs.filter(x=>x.servicio===sv);const r=respStat(rx);const l=lastBy(sv);const lateD=l?(now-l)/864e5:null;
-      body+=`<tr><td>${esc(sv)}</td><td class="n">${rx.length}</td>`+
-        CTRL.filter(c=>c.id!=='c06').map(c=>`<td class="ctr">${cellC(ctrlStat(rx,c.id))}</td>`).join('')+
-        `<td class="n">${rx.reduce((a,x)=>a+x.recl,0)||'—'}</td>`+
-        `<td class="ctr">${r.n?`<span class="cell ${r.st}" title="${r.same} mismo día · ${r.d2} 2 días · ${r.d7} 7 días · ${r.none} sin respuesta">${fmt(r.pct)} %<small>${r.n} resp.</small></span>`:'<span class="cell nd">—</span>'}</td>`+
-        `<td class="ctr">${cellC(ctrlStat(rx,'c06'))}</td>`+
-        `<td class="n ${lateD==null||lateD>CONFIG.SIN_CARGA_DIAS?'late':''}">${l?dLabel(l):'nunca'}</td></tr>`;});
-  });
-  $('matrix').innerHTML=`<thead><tr><th>Servicio</th><th class="n">Cargas</th>${CTRL.filter(c=>c.id!=='c06').map(c=>`<th class="ctr">${c.code} ${c.short}</th>`).join('')}
-    <th class="n">04 Reclamos</th><th class="ctr">05 Resp. mismo día</th><th class="ctr">06 Entregas</th><th class="n">Última carga</th></tr></thead><tbody>${body}</tbody>`;
-
-  drawTrend(all);
-
-  // Últimas cargas
-  const last=[...xs].sort((a,b)=>b.fecha-a.fecha).slice(0,20);
-  $('entriesNote').textContent=last.length?`${last.length} de ${xs.length} del período`:'';
-  const tv=v=>v?`<span class="tag-v ${v}">${{C:'Cumple',P:'Parcial',N:'No cumple'}[v]}</span>`:'<span class="tag-v X">—</span>';
-  $('entries').innerHTML=`<thead><tr><th>Fecha y hora</th><th>Servicio</th>${CTRL.filter(c=>c.id!=='c06').map(c=>`<th>${c.code} ${c.short}</th>`).join('')}<th class="n">04 Recl.</th><th>05 Respuesta</th><th>06 Entregas</th><th>Responsable</th></tr></thead><tbody>`+
-    (last.length?last.map(x=>`<tr><td class="n" style="text-align:left">${tLabel(x.fecha)}</td><td>${esc(x.servicio)}</td>${CTRL.filter(c=>c.id!=='c06').map(c=>`<td>${tv(x[c.id])}</td>`).join('')}
-      <td class="n">${x.recl||'—'}</td><td>${x.velRaw?`<span class="tag-v ${x.vel===0?'C':x.vel===99?'N':'P'}">${esc(x.velRaw.replace(/^Se responde /i,''))}</span>`:'<span class="tag-v X">—</span>'}</td><td>${tv(x.c06)}</td><td>${esc(x.resp)}</td></tr>`).join('')
-      :`<tr><td colspan="9">No hay cargas en este período.</td></tr>`)+'</tbody>';
+  renderCompare(D);
+  renderMatrix(D);
+  drawTrend(D);
+  renderEntries(D);
 }
 
-function drawTrend(all){
+// Muestra los dos valores en orden cronológico (más antiguo → más reciente)
+const chron=(a,b,r1,r2,vr)=>{const [o,n]=r2[0]>r1[0]?[a,b]:[b,a];return `<span class="vs">${o} → ${n}${vr?` <span class="delta ${vr.cls}">${vr.txt}</span>`:''}</span>`;};
+function renderCompare(D){
+  const {r1,r2,x1,x2,kpis}=D;
+  $('cmpPanel').hidden=!r2; if(!r2){S.charts.cmp?.destroy();S.charts.cmp=null;return;}
+  $('cmpPeriods').innerHTML=`<span><i style="background:var(--p1)"></i>Período 1: ${rangeText(r1)}</span><span><i style="background:var(--p2)"></i>Período 2: ${rangeText(r2)}</span>`;
+  $('cmpTable').innerHTML=`<thead><tr><th>KPI</th><th class="n">Período 1</th><th class="n">Período 2</th><th class="n">Variación</th><th>Cargas 1 / 2</th></tr></thead><tbody>`+
+    kpis.map(k=>{const a=kpiVal(k,x1),b=kpiVal(k,x2),vr=variation(k,a.v,b.v,r1,r2);
+      const n1=k.type==='recl'?x1.filter(x=>x.src!=='rep').length:a.s.n, n2=k.type==='recl'?x2.filter(x=>x.src!=='rep').length:b.s.n;
+      return `<tr><td>${k.code} ${esc(k.name)}</td><td class="n" style="color:var(--p1)">${a.txt}</td><td class="n" style="color:var(--p2)">${b.txt}</td>
+        <td class="n">${vr?`<span class="delta ${vr.cls}">${vr.txt}</span>`:'—'}</td><td class="n" style="text-align:left">${n1} / ${n2}</td></tr>`;}).join('')+'</tbody>';
+  // Gráfico de barras agrupadas (solo indicadores en %)
+  if(typeof Chart!=='undefined'){
+    const pk=kpis.filter(k=>k.type!=='recl');
+    Chart.defaults.font.family=css('--f-body');Chart.defaults.color=css('--muted');Chart.defaults.borderColor=css('--line');
+    S.charts.cmp?.destroy();
+    S.charts.cmp=new Chart($('cmpChart'),{type:'bar',data:{labels:pk.map(k=>`${k.code} ${k.short}`),datasets:[
+      {label:'Período 1',data:pk.map(k=>kpiVal(k,x1).v),backgroundColor:css('--p1'),borderRadius:4,maxBarThickness:34},
+      {label:'Período 2',data:pk.map(k=>kpiVal(k,x2).v),backgroundColor:css('--p2'),borderRadius:4,maxBarThickness:34}]},
+      options:{responsive:true,maintainAspectRatio:false,animation:false,devicePixelRatio:Math.max(2,window.devicePixelRatio||1),
+        plugins:{legend:{position:'bottom',labels:{boxWidth:10,boxHeight:10}},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.raw==null?'sin datos':fmt(c.raw,1)+' %'}`}}},
+        scales:{y:{min:0,max:100,ticks:{callback:v=>v+' %'},grid:{color:css('--line')}},x:{grid:{display:false}}}}});
+  }
+  // Por servicio
+  const pk=kpis.filter(k=>k.type!=='recl');
+  const groups=['Plantas','Hospitales','Penitenciarías','Otros'];
+  let body='';
+  groups.forEach(g=>{const ss=D.servs.filter(s=>tipoDe(s)===g);if(!ss.length)return;
+    body+=`<tr class="grp"><td colspan="${pk.length+1+(kpis.some(k=>k.type==='recl')?1:0)}">${g}</td></tr>`;
+    ss.forEach(sv=>{const a=x1.filter(x=>x.servicio===sv),b=x2.filter(x=>x.servicio===sv);
+      body+=`<tr><td>${esc(sv)}</td>`+pk.map(k=>{const va=kpiVal(k,a).v,vb=kpiVal(k,b).v,vr=variation(k,va,vb,r1,r2);
+        return `<td class="ctr">${chron(`<span class="a">${va==null?'—':fmt(va,0)}</span>`,`<span class="b">${vb==null?'—':fmt(vb,0)}</span>`,r1,r2,vr)}</td>`;}).join('')+
+        (kpis.some(k=>k.type==='recl')?(()=>{const k=KPIS[3],va=kpiVal(k,a).v,vb=kpiVal(k,b).v,vr=variation(k,va,vb,r1,r2);return `<td class="ctr">${chron(`<span class="a">${va}</span>`,`<span class="b">${vb}</span>`,r1,r2,vr&&vr.d?vr:null)}</td>`;})():'')+'</tr>';});});
+  $('cmpServ').innerHTML=`<thead><tr><th>Servicio</th>${pk.map(k=>`<th class="ctr">${k.code} ${k.short}</th>`).join('')}${kpis.some(k=>k.type==='recl')?'<th class="ctr">04 Reclamos</th>':''}</tr></thead><tbody>${body}</tbody>`;
+}
+
+function renderMatrix(D){
+  const {x1,kpis}=D, now=new Date();
+  const cellC=s=>s.n?`<span class="cell ${s.st}" title="${s.C} cumple · ${s.P} parcial · ${s.N} no cumple">${fmt(s.pct)} %<small>${s.N?s.N+' NC':s.P?s.P+' parc.':s.n+' cargas'}</small></span>`:'<span class="cell nd">—</span>';
+  const cellK=(k,rx)=>{
+    if(k.type==='ctrl') return `<td class="ctr">${cellC(ctrlStat(rx,k.id))}</td>`;
+    if(k.type==='resp'){const r=respStat(rx);return `<td class="ctr">${r.n?`<span class="cell ${r.st}" title="${r.same} mismo día · ${r.d2} 2 días · ${r.d7} 7 días · ${r.none} sin respuesta">${fmt(r.pct)} %<small>${r.n} resp.</small></span>`:'<span class="cell nd">—</span>'}</td>`;}
+    return `<td class="n">${rx.reduce((a,x)=>a+x.recl,0)||'—'}</td>`;};
+  let body='';
+  ['Plantas','Hospitales','Penitenciarías','Otros'].forEach(g=>{const ss=D.servs.filter(s=>tipoDe(s)===g);if(!ss.length)return;
+    body+=`<tr class="grp"><td colspan="${kpis.length+3}">${g}</td></tr>`;
+    ss.forEach(sv=>{const rx=x1.filter(x=>x.servicio===sv);const l=D.alerts.lastBy(sv);const lateD=l?(now-l)/864e5:null;
+      body+=`<tr><td>${esc(sv)}</td><td class="n">${rx.filter(x=>x.src!=='rep').length}</td>${kpis.map(k=>cellK(k,rx)).join('')}<td class="n ${lateD==null||lateD>CONFIG.SIN_CARGA_DIAS?'late':''}">${l?dLabel(l):'nunca'}</td></tr>`;});});
+  $('matrix').innerHTML=`<thead><tr><th>Servicio</th><th class="n">Cargas</th>${kpis.map(k=>`<th class="${k.type==='recl'?'n':'ctr'}">${k.code} ${k.short}</th>`).join('')}<th class="n">Última carga</th></tr></thead><tbody>${body}</tbody>`;
+}
+
+function trendSeries(D){
+  const {x1,r1,kpis}=D, days=Math.round((r1[1]-r1[0])/864e5)+1, daily=days<=31;
+  const monday=d=>{const x=day0(d);x.setDate(x.getDate()-((x.getDay()+6)%7));return x;};
+  const g={}; x1.forEach(x=>{const k=dKey(daily?day0(x.fecha):monday(x.fecha));(g[k]??=[]).push(x);});
+  const keys=Object.keys(g).sort();
+  // El 05 tiene pocas respuestas por día: solo entra en la tendencia cuando se lo elige solo
+  const pk=kpis.length===1?kpis.filter(k=>k.type!=='recl'):kpis.filter(k=>k.type==='ctrl');
+  return {daily,labels:keys.map(k=>`${k.slice(8)}/${k.slice(5,7)}`),series:pk.map(k=>({k,data:keys.map(kk=>kpiVal(k,g[kk]).v)}))};
+}
+function drawTrend(D){
   if(typeof Chart==='undefined') return;
   Chart.defaults.font.family=css('--f-body'); Chart.defaults.color=css('--muted'); Chart.defaults.borderColor=css('--line');
-  const monday=d=>{const x=day0(d);x.setDate(x.getDate()-((x.getDay()+6)%7));return x;};
-  const wk={}; all.forEach(x=>{const k=dKey(monday(x.fecha));(wk[k]??=[]).push(x);});
-  const keys=Object.keys(wk).sort().slice(-12);
-  const labels=keys.map(k=>`${k.slice(8)}/${k.slice(5,7)}`);
-  const colors=['--s1','--s2','--s3','--s4'].map(css);
-  const ds=CTRL.map((c,i)=>({type:'line',label:`${c.code} ${c.short}`,data:keys.map(k=>ctrlStat(wk[k],c.id).pct),borderColor:colors[i],backgroundColor:colors[i],
-    tension:.25,pointRadius:3.5,pointHoverRadius:6,spanGaps:true,borderWidth:2}));
-  ds.push({type:'line',label:`Meta ${CONFIG.META} %`,data:keys.map(()=>CONFIG.META),borderColor:css('--muted'),borderDash:[5,4],borderWidth:1.2,pointRadius:0,pointHoverRadius:0});
+  const T=trendSeries(D);
+  $('trendTitle').textContent=`Tendencia ${T.daily?'diaria':'semanal'} · Período 1`;
+  const colors=['--s1','--s2','--s3','--s4','--s1','--s2'].map(css);
+  const ds=T.series.map((s,i)=>({type:'line',label:`${s.k.code} ${s.k.short}`,data:s.data,borderColor:colors[i],backgroundColor:colors[i],
+    tension:.25,pointRadius:3,pointHoverRadius:6,spanGaps:true,borderWidth:2}));
+  ds.push({type:'line',label:`Meta ${CONFIG.META} %`,data:T.labels.map(()=>CONFIG.META),borderColor:css('--muted'),borderDash:[5,4],borderWidth:1.2,pointRadius:0,pointHoverRadius:0});
   const vals=ds.flatMap(d=>d.data).filter(v=>v!=null);
   const lo=Math.max(0,Math.floor(Math.min(80,...vals)/10)*10);
-  S.chart?.destroy();
-  S.chart=new Chart($('trend'),{data:{labels,datasets:ds},options:{responsive:true,maintainAspectRatio:false,animation:false,
-    interaction:{mode:'index',intersect:false},
+  S.charts.trend?.destroy();
+  S.charts.trend=new Chart($('trend'),{data:{labels:T.labels,datasets:ds},options:{responsive:true,maintainAspectRatio:false,animation:false,
+    devicePixelRatio:Math.max(2,window.devicePixelRatio||1),interaction:{mode:'index',intersect:false},
     plugins:{legend:{position:'bottom',labels:{usePointStyle:true,boxWidth:8,boxHeight:8}},
-      tooltip:{callbacks:{title:c=>`Semana del ${c[0].label}`,label:c=>`${c.dataset.label}: ${c.raw==null?'sin datos':fmt(c.raw,1)+' %'}`}}},
-    scales:{y:{min:lo,max:100,ticks:{callback:v=>v+' %'},grid:{color:css('--line')}},x:{grid:{display:false},title:{display:true,text:'Semana que empieza el lunes'}}}}});
+      tooltip:{callbacks:{title:c=>T.daily?c[0].label:`Semana del ${c[0].label}`,label:c=>`${c.dataset.label}: ${c.raw==null?'sin datos':fmt(c.raw,1)+' %'}`}}},
+    scales:{y:{min:lo,max:100,ticks:{callback:v=>v+' %'},grid:{color:css('--line')}},x:{grid:{display:false},title:{display:!T.daily,text:'Semana que empieza el lunes'}}}}});
+}
+
+function entryCols(){
+  const vis=visibleKpis().map(k=>k.id);
+  return KPIS.filter(k=>vis.includes(k.id));
+}
+function renderEntries(D){
+  const rows=resFilter(D.x1).sort((a,b)=>b.fecha-a.fecha), cols=entryCols();
+  $('entriesNote').textContent=`${rows.length} ${rows.length===1?'carga':'cargas'}${S.res!=='__all'?` con «${LV[S.res]}»`:''}`;
+  const tv=v=>v?`<span class="tag-v ${v}">${LVs[v]}</span>`:'<span class="tag-v X">—</span>';
+  const cell=(k,x)=>{
+    if(x.src==='rep'&&k.id!=='c06') return '<td></td>';
+    if(k.id==='c04') return `<td class="n">${x.recl||'—'}</td>`;
+    if(k.id==='c05') return `<td>${x.velRaw?`<span class="tag-v ${x.vel===0?'C':x.vel===99?'N':'P'}">${esc(x.velRaw.replace(/^Se responde /i,''))}</span>`:'<span class="tag-v X">—</span>'}</td>`;
+    if(k.id==='c06'&&x.c06Obs) return `<td><span class="tag-v X" title="Reemplazado por la respuesta del repartidor"><s>${LVs[x.c06Obs]}</s> reemplazado</span></td>`;
+    return `<td>${tv(x[k.id])}</td>`;};
+  $('entries').innerHTML=`<thead><tr><th>Fecha y hora</th><th>Servicio</th>${cols.map(k=>`<th${k.id==='c04'?' class="n"':''}>${k.code} ${k.short}</th>`).join('')}<th>Responsable</th></tr></thead><tbody>`+
+    (rows.length?rows.map(x=>`<tr><td class="n" style="text-align:left">${tLabel(x.fecha)}</td><td>${esc(x.servicio)}${x.src==='rep'?' <span class="tag-v X">repartidor</span>':''}</td>${cols.map(k=>cell(k,x)).join('')}<td>${esc(x.resp)}</td></tr>`).join('')
+      :`<tr><td colspan="${cols.length+3}">No hay cargas con estos filtros.</td></tr>`)+'</tbody>';
+}
+
+/* ===================== DESCARGAS ===================== */
+const loaded={};
+function loadScript(src){return loaded[src]??=new Promise((ok,ko)=>{const s=document.createElement('script');s.src=src;s.onload=ok;s.onerror=()=>{delete loaded[src];ko(new Error('No se pudo cargar '+src));};document.head.appendChild(s);});}
+function toast(msg){const t=$('toast');t.textContent=msg;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>t.hidden=true,3500);}
+function filtersText(){
+  const kp=S.kpi==='__all'?'Todos':KPIS.find(k=>k.id===S.kpi).code+' '+KPIS.find(k=>k.id===S.kpi).name;
+  return [`Tipo: ${S.tipo==='__all'?'Todos':S.tipo}`,`Servicio: ${S.serv==='__all'?'Todos':S.serv}`,`KPI: ${kp}`,S.res!=='__all'?`Resultado: ${LV[S.res]}`:null].filter(Boolean).join(' · ');
+}
+function fileBase(D){return `KPI_CLISA_${dKey(D.r1[0])}_a_${dKey(D.r1[1])}${D.r2?`_vs_${dKey(D.r2[0])}_a_${dKey(D.r2[1])}`:''}`;}
+function rowExport(x,cols){
+  return [dFull(x.fecha),`${pad(x.fecha.getHours())}:${pad(x.fecha.getMinutes())}`,x.servicio,x.tipo,x.src==='rep'?'Repartidor':'Formulario principal',
+    ...cols.map(k=>{if(x.src==='rep'&&k.id!=='c06')return '';if(k.id==='c04')return x.src==='rep'?'':x.recl;if(k.id==='c05')return x.velRaw;
+      if(k.id==='c06'&&x.c06Obs)return `${LVs[x.c06Obs]} (reemplazado)`;return x[k.id]?LV[x[k.id]]:'';}),x.resp];
+}
+
+async function downloadXlsx(){
+  const btn=$('btnXlsx');btn.disabled=true;
+  try{
+    await loadScript(LIBS.xlsx);
+    const D=compute(), wb=XLSX.utils.book_new(), cols=entryCols();
+    const head=[['Clisa Interior S.A. · Registros de KPI por servicio'],[`Período 1: ${rangeText(D.r1)}`],...(D.r2?[[`Período 2: ${rangeText(D.r2)}`]]:[]),[filtersText()],[`Generado: ${dFull(new Date())} ${pad(new Date().getHours())}:${pad(new Date().getMinutes())}`],[]];
+    // Resumen
+    const res=[...head,['KPI','Indicador','Resultado P1','Detalle P1','Meta','Estado P1',...(D.r2?['Resultado P2','Detalle P2','Variación']:[])]];
+    D.kpis.forEach(k=>{const a=kpiVal(k,D.x1),b=D.r2?kpiVal(k,D.x2):null,vr=b?variation(k,a.v,b.v,D.r1,D.r2):null;
+      res.push([k.code,k.name,a.v==null?'':(k.type==='recl'?a.v:+a.v.toFixed(1)),a.detail,a.meta,k.type==='recl'?(a.v?'Con reclamos':'Sin reclamos'):({ok:'En meta',warn:'Revisar',crit:'Fuera de meta',nd:'Sin datos'}[a.pill]),
+        ...(b?[b.v==null?'':(k.type==='recl'?b.v:+b.v.toFixed(1)),b.detail,vr?vr.txtPdf:'']:[])]);});
+    res.push([],['Alertas del Período 1']);D.alerts.items.forEach(a=>{res.push([a.tag,a.t]);a.list.forEach(l=>res.push(['',l]));});
+    const ws1=XLSX.utils.aoa_to_sheet(res);ws1['!cols']=[{wch:12},{wch:38},{wch:14},{wch:46},{wch:24},{wch:14},{wch:14},{wch:46},{wch:12}];
+    XLSX.utils.book_append_sheet(wb,ws1,'Resumen');
+    // Matriz
+    const mx=[...head,['Servicio','Tipo','Cargas',...D.kpis.flatMap(k=>k.type==='ctrl'?[`${k.code} ${k.short} % cumple`,`${k.code} cumple`,`${k.code} parcial`,`${k.code} no cumple`]:k.type==='resp'?[`${k.code} % mismo día`,`${k.code} respuestas`]:[`${k.code} reclamos`]),'Última carga']];
+    D.servs.forEach(sv=>{const rx=D.x1.filter(x=>x.servicio===sv),l=D.alerts.lastBy(sv);
+      mx.push([sv,tipoDe(sv),rx.filter(x=>x.src!=='rep').length,...D.kpis.flatMap(k=>{const v=kpiVal(k,rx);
+        if(k.type==='ctrl')return [v.v==null?'':+v.v.toFixed(1),v.s.C,v.s.P,v.s.N];if(k.type==='resp')return [v.v==null?'':+v.v.toFixed(1),v.s.n];return [v.v];}),l?dFull(l):'nunca']);});
+    const ws2=XLSX.utils.aoa_to_sheet(mx);ws2['!cols']=[{wch:26},{wch:14},{wch:8},...Array(30).fill({wch:12})];
+    XLSX.utils.book_append_sheet(wb,ws2,'Por servicio');
+    // Comparativa
+    if(D.r2){const pk=D.kpis;
+      const cp=[...head,['Servicio',...pk.flatMap(k=>[`${k.code} ${k.short} P1`,`${k.code} P2`,`${k.code} variación`])]];
+      D.servs.forEach(sv=>{const a=D.x1.filter(x=>x.servicio===sv),b=D.x2.filter(x=>x.servicio===sv);
+        cp.push([sv,...pk.flatMap(k=>{const va=kpiVal(k,a).v,vb=kpiVal(k,b).v,vr=variation(k,va,vb,D.r1,D.r2);const f=v=>v==null?'':(k.type==='recl'?v:+v.toFixed(1));return [f(va),f(vb),vr?vr.txtPdf:''];})]);});
+      const ws3=XLSX.utils.aoa_to_sheet(cp);ws3['!cols']=[{wch:26},...Array(20).fill({wch:12})];
+      XLSX.utils.book_append_sheet(wb,ws3,'Comparativa');}
+    // Cargas
+    const hdr=['Fecha','Hora','Servicio','Tipo','Origen',...cols.map(k=>`${k.code} ${k.name}`),'Responsable'];
+    const per=(xs,lab)=>resFilter(xs).sort((a,b)=>a.fecha-b.fecha).map(x=>[lab,...rowExport(x,cols)]);
+    const cg=[...head,['Período',...hdr],...per(D.x1,'Período 1'),...(D.r2?per(D.x2,'Período 2'):[])];
+    const ws4=XLSX.utils.aoa_to_sheet(cg);ws4['!cols']=[{wch:10},{wch:11},{wch:7},{wch:26},{wch:14},{wch:18},...cols.map(()=>({wch:20})),{wch:26}];
+    XLSX.utils.book_append_sheet(wb,ws4,'Cargas');
+    XLSX.writeFile(wb,fileBase(D)+'.xlsx');
+    toast('Excel descargado.');
+  }catch(e){toast('No se pudo generar el Excel: '+e.message);}
+  btn.disabled=false;
+}
+
+// Logo de Clisa dibujado con formas vectoriales (no se pixela al hacer zoom)
+function pdfLogo(doc,x,y,s){
+  const k=s/100, G=[0,124,53];
+  doc.setFillColor(...G);doc.circle(x+50*k,y+50*k,39.7*k,'F');
+  doc.setFillColor(255,255,255);doc.ellipse(x+55*k,y+50*k,24.3*k,39.4*k,'F');doc.rect(x+55*k,y+8*k,37*k,84*k,'F');
+  doc.setDrawColor(...G);doc.setLineWidth(5.6*k);doc.circle(x+50*k,y+50*k,45.2*k,'S');
+  doc.setFillColor(...G);doc.rect(x+53.5*k,y+19*k,8.3*k,65.5*k,'F');
+}
+async function downloadPdf(){
+  const btn=$('btnPdf');btn.disabled=true;
+  try{
+    await loadScript(LIBS.jspdf);await loadScript(LIBS.autotable);
+    const D=compute(), {jsPDF}=window.jspdf, doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+    const W=297,H=210,M=12, INK=[20,32,29],MUT=[92,107,103],ACC=[15,107,92],LINE=[217,224,221];
+    const COL={ok:[[227,242,233],[30,123,76]],warn:[[251,239,214],[154,97,0]],crit:[[249,225,222],[179,38,30]],nd:[[236,239,238],[126,138,134]]};
+    const P1=[15,107,92],P2=[180,83,42];
+    const t=v=>String(v).replace(/[−–]/g,'-').replace(/→/g,'>').replace(/≥/g,'>=');
+    const header=()=>{
+      pdfLogo(doc,M,8,14);
+      doc.setFont('helvetica','bold');doc.setFontSize(14);doc.setTextColor(...INK);doc.text('Clisa Interior S.A.',M+17,17.2);
+      doc.setFontSize(12);doc.text('Registros de KPI por servicio',W-M,13.5,{align:'right'});
+      doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...MUT);
+      doc.text(t(`Período 1: ${rangeText(D.r1)}${D.r2?`   ·   Período 2: ${rangeText(D.r2)}`:''}`),W-M,18.5,{align:'right'});
+      doc.setDrawColor(...ACC);doc.setLineWidth(.6);doc.line(M,25,W-M,25);
+    };
+    let y=31;
+    const section=(title,need=20)=>{if(y+need>H-14){doc.addPage();header();y=31;}doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(...INK);doc.text(title,M,y);y+=3;};
+    const tbl=(opts)=>{doc.autoTable({startY:y,margin:{left:M,right:M,top:31,bottom:14},theme:'plain',
+      styles:{font:'helvetica',fontSize:8,textColor:INK,cellPadding:{top:1.6,bottom:1.6,left:2,right:2},lineColor:LINE,lineWidth:{bottom:.2}},
+      headStyles:{fontStyle:'bold',fontSize:7,textColor:MUT,fillColor:[242,244,243]},
+      didDrawPage:()=>header(),...opts});y=doc.lastAutoTable.finalY+8;};
+    header();
+    doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...MUT);
+    const gen=new Date();
+    doc.text(t(`${filtersText()}   ·   Generado el ${dFull(gen)} a las ${pad(gen.getHours())}:${pad(gen.getMinutes())}`),M,y);y+=6;
+
+    // Resumen
+    section('Resumen de indicadores');
+    const stTxt=(k,a)=>k.type==='recl'?(a.v?'Con reclamos':'Sin reclamos'):({ok:'En meta',warn:'Revisar',crit:'Fuera de meta',nd:'Sin datos'}[a.pill]);
+    const resBody=D.kpis.map(k=>{const a=kpiVal(k,D.x1),b=D.r2?kpiVal(k,D.x2):null,vr=b?variation(k,a.v,b.v,D.r1,D.r2):null;
+      return [k.code,k.name,a.txt,t(a.detail),t(a.meta),stTxt(k,a),...(b?[b.txt,vr?vr.txtPdf:'-']:[])];});
+    tbl({head:[['KPI','Indicador','Período 1','Detalle','Meta','Estado',...(D.r2?['Período 2','Variación']:[])]],body:resBody,
+      columnStyles:{0:{cellWidth:12,fontStyle:'bold'},2:{halign:'right',fontStyle:'bold',textColor:P1},6:{halign:'right',fontStyle:'bold',textColor:P2},7:{halign:'right',fontStyle:'bold'}},
+      didParseCell:d=>{if(d.section!=='body')return;const k=D.kpis[d.row.index],a=kpiVal(k,D.x1);
+        if(d.column.index===5){const c=COL[k.type==='recl'?(a.v?'warn':'ok'):a.pill];d.cell.styles.fillColor=c[0];d.cell.styles.textColor=c[1];d.cell.styles.fontStyle='bold';}
+        if(d.column.index===7&&D.r2){const vr=variation(k,a.v,kpiVal(k,D.x2).v,D.r1,D.r2);if(vr)d.cell.styles.textColor=vr.cls==='up'?COL.ok[1]:vr.cls==='down'?COL.crit[1]:MUT;}}});
+
+    // Alertas
+    section('Alertas del Período 1');
+    tbl({head:[['Tipo','Detalle']],body:D.alerts.items.map(a=>[a.tag,t(a.t+'\n'+a.list.slice(0,8).join('\n')+(a.list.length>8?`\ny ${a.list.length-8} más`:''))]),
+      columnStyles:{0:{cellWidth:26,fontStyle:'bold'}},
+      didParseCell:d=>{if(d.section==='body'&&d.column.index===0){d.cell.styles.textColor=COL[D.alerts.items[d.row.index].c][1];}}});
+
+    // Gráficos: se dibujan aparte, con fondo blanco y colores claros, a alta resolución
+    const LIGHT={ink:'#14201D',mut:'#5C6B67',grid:'#D9E0DD',ser:['#0F6B5C','#B4532A','#3E5BA9','#8A5A9E','#0F6B5C','#B4532A'],p1:'#0F6B5C',p2:'#B4532A'};
+    const chartImg=(cfg,wpx,hpx)=>{const c=document.createElement('canvas');c.width=wpx;c.height=hpx;c.style.width=wpx+'px';c.style.height=hpx+'px';
+      const ch=new Chart(c,{...cfg,options:{...cfg.options,responsive:false,animation:false,devicePixelRatio:3},
+        plugins:[{id:'bg',beforeDraw:k=>{const x=k.ctx;x.save();x.fillStyle='#fff';x.fillRect(0,0,k.width,k.height);x.restore();}}]});
+      const url=ch.toBase64Image('image/png',1);ch.destroy();return url;};
+    const axes=(yfmt)=>({y:{ticks:{color:LIGHT.mut,font:{size:11},callback:yfmt},grid:{color:LIGHT.grid},border:{display:false}},x:{ticks:{color:LIGHT.mut,font:{size:11}},grid:{display:false}}});
+    const leg={position:'bottom',labels:{color:LIGHT.ink,font:{size:11},boxWidth:10,boxHeight:10}};
+    const T=trendSeries(D);
+    if(T.labels.length){section($('trendTitle').textContent,88);
+      const vals=T.series.flatMap(x=>x.data).filter(v=>v!=null), lo=Math.max(0,Math.floor(Math.min(80,...vals)/10)*10);
+      const url=chartImg({type:'line',data:{labels:T.labels,datasets:[...T.series.map((x,i)=>({label:`${x.k.code} ${x.k.short}`,data:x.data,borderColor:LIGHT.ser[i],backgroundColor:LIGHT.ser[i],borderWidth:2,pointRadius:2.5,tension:.25,spanGaps:true})),
+        {label:`Meta ${CONFIG.META} %`,data:T.labels.map(()=>CONFIG.META),borderColor:LIGHT.mut,borderDash:[5,4],borderWidth:1.2,pointRadius:0}]},
+        options:{plugins:{legend:leg},scales:{...axes(v=>v+' %'),y:{...axes(v=>v+' %').y,min:lo,max:100}}}},1092,300);
+      doc.addImage(url,'PNG',M,y+2,W-2*M,75);y+=84;}
+    if(D.r2){const pk=D.kpis.filter(k=>k.type!=='recl');
+      if(pk.length){section('Comparativa entre períodos',88);
+        const url=chartImg({type:'bar',data:{labels:pk.map(k=>`${k.code} ${k.short}`),datasets:[
+          {label:`Período 1 (${rangeText(D.r1)})`,data:pk.map(k=>kpiVal(k,D.x1).v),backgroundColor:LIGHT.p1,borderRadius:3,maxBarThickness:40},
+          {label:`Período 2 (${rangeText(D.r2)})`,data:pk.map(k=>kpiVal(k,D.x2).v),backgroundColor:LIGHT.p2,borderRadius:3,maxBarThickness:40}]},
+          options:{plugins:{legend:leg},scales:{...axes(v=>v+' %'),y:{...axes(v=>v+' %').y,min:0,max:100}}}},1092,300);
+        doc.addImage(url,'PNG',M,y+2,W-2*M,75);y+=84;}}
+
+    // Matriz por servicio
+    section('Matriz por servicio · Período 1');
+    const mHead=['Servicio','Cargas',...D.kpis.map(k=>`${k.code} ${k.short}`),'Última carga'];
+    const mRows=[],mSt=[];
+    ['Plantas','Hospitales','Penitenciarías','Otros'].forEach(g=>{const ss=D.servs.filter(s=>tipoDe(s)===g);if(!ss.length)return;
+      mRows.push([{content:g.toUpperCase(),colSpan:mHead.length,styles:{fillColor:[242,244,243],textColor:MUT,fontStyle:'bold',fontSize:7}}]);mSt.push(null);
+      ss.forEach(sv=>{const rx=D.x1.filter(x=>x.servicio===sv),l=D.alerts.lastBy(sv),st=[];
+        mRows.push([sv,rx.filter(x=>x.src!=='rep').length,...D.kpis.map(k=>{
+          if(k.type==='ctrl'){const s=ctrlStat(rx,k.id);st.push(s.st);return s.n?`${fmt(s.pct)} %${s.N?` (${s.N} NC)`:s.P?` (${s.P} parc.)`:''}`:'-';}
+          if(k.type==='resp'){const r=respStat(rx);st.push(r.st);return r.n?`${fmt(r.pct)} % (${r.n})`:'-';}
+          st.push(null);return rx.reduce((a,x)=>a+x.recl,0)||'-';}),l?dLabel(l):'nunca']);mSt.push(st);});});
+    tbl({head:[mHead],body:mRows,columnStyles:{0:{cellWidth:44},1:{halign:'right'}},
+      didParseCell:d=>{if(d.section!=='body')return;const st=mSt[d.row.index];if(!st)return;const i=d.column.index-2;
+        if(i>=0&&i<st.length&&st[i]&&st[i]!=='nd'){const c=COL[st[i]];d.cell.styles.fillColor=c[0];d.cell.styles.textColor=c[1];d.cell.styles.fontStyle='bold';}
+        if(i>=0&&i<D.kpis.length)d.cell.styles.halign='center';}});
+
+    // Comparativa por servicio
+    if(D.r2){section('Comparativa por servicio · del período más antiguo al más reciente');
+      tbl({head:[['Servicio',...D.kpis.map(k=>`${k.code} ${k.short}`)]],
+        body:D.servs.map(sv=>{const a=D.x1.filter(x=>x.servicio===sv),b=D.x2.filter(x=>x.servicio===sv);
+          return [sv,...D.kpis.map(k=>{const va=kpiVal(k,a).v,vb=kpiVal(k,b).v,vr=variation(k,va,vb,D.r1,D.r2),f=v=>v==null?'-':(k.type==='recl'?v:fmt(v,0));
+            const [o,n]=D.r2[0]>D.r1[0]?[f(va),f(vb)]:[f(vb),f(va)];return `${o} > ${n}${vr&&vr.d?`  (${vr.txtPdf})`:''}`;})];}),
+        columnStyles:{0:{cellWidth:44}},didParseCell:d=>{if(d.section==='body'&&d.column.index>0)d.cell.styles.halign='center';}});}
+
+    // Cargas
+    const cols=entryCols(), list=resFilter(D.x1).sort((a,b)=>a.fecha-b.fecha);
+    section(`Detalle de cargas del Período 1 (${list.length})`);
+    tbl({head:[['Fecha','Hora','Servicio','Origen',...cols.map(k=>`${k.code} ${k.short}`),'Responsable']],
+      body:list.map(x=>{const r=rowExport(x,cols);return [r[0],r[1],r[2],r[4]==='Repartidor'?'Repartidor':'Principal',...r.slice(5,5+cols.length).map(v=>t(v===''?'':v)),r.at(-1)];}),
+      styles:{fontSize:7},
+      didParseCell:d=>{if(d.section!=='body')return;const i=d.column.index-4;if(i<0||i>=cols.length)return;const v=String(d.cell.raw||'');
+        const c=/^No cumple/.test(v)||/No se responde/i.test(v)?COL.crit:/parcial|2 d|7 d/i.test(v)?COL.warn:/^Cumple$|mismo día/i.test(v)?COL.ok:null;
+        if(/reemplazado/.test(v)){d.cell.styles.textColor=MUT;d.cell.styles.fontStyle='italic';return;}
+        if(c){d.cell.styles.textColor=c[1];d.cell.styles.fontStyle='bold';}}});
+
+    // Pie de página
+    const n=doc.getNumberOfPages();
+    for(let i=1;i<=n;i++){doc.setPage(i);doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...MUT);
+      doc.setDrawColor(...LINE);doc.setLineWidth(.2);doc.line(M,H-10,W-M,H-10);
+      doc.text('Clisa Interior S.A. · Tablero de KPI por servicio · PO-KPI-2026',M,H-6);doc.text(`Página ${i} de ${n}`,W-M,H-6,{align:'right'});}
+    doc.save(fileBase(D)+'.pdf');
+    toast('PDF descargado.');
+  }catch(e){toast('No se pudo generar el PDF: '+e.message);}
+  btn.disabled=false;
 }
 
 /* ===================== ACTUALIZACIÓN EN VIVO ===================== */
@@ -451,28 +878,42 @@ function setChip(){
 async function refresh(){
   if(S.loading)return;S.loading=true;setChip();
   try{
-    const rows=toRows(parseCSV(await fetchCSV(CONFIG.SHEET)));
-    S.rows=rows;S.source='sheet';S.error=null;S.updated=new Date();
-    $('banner').hidden=!S.missing.length;
-    if(S.missing.length) $('banner').innerHTML=`<b>Columnas no encontradas:</b> ${S.missing.join(', ')}. Revisá que los títulos de las preguntas del formulario no hayan cambiado.`;
-    $('srcDetail').textContent=`Fuente: respuestas del formulario «Registros de KPI Clisa Interior S.A.» · ${rows.length} cargas leídas. Se relee cada ${CONFIG.REFRESH_SEC} s.`;
+    const [mainTxt,repRes]=await Promise.all([fetchCSV(CONFIG.SHEET),fetchCSV(CONFIG.SHEET_06).then(t=>({t}),e=>({e}))]);
+    const main=toRows(parseCSV(mainTxt));
+    let rep=[]; S.missing06=[]; S.err06=null;
+    if(repRes.t){const d=parseCSV(repRes.t); rep=d.length?toRows06(d):[];} else S.err06=repRes.e?.message||'error';
+    S.rows=merge06(main,rep);S.source='sheet';S.error=null;S.updated=new Date();
+    const msgs=[];
+    if(S.missing.length) msgs.push(`<b>Formulario principal, columnas no encontradas:</b> ${S.missing.join(', ')}.`);
+    if(S.missing06.length) msgs.push(`<b>Formulario del repartidor, falta la pregunta:</b> ${S.missing06.join(', ')}. Sin el servicio no se puede asignar la entrega.`);
+    if(S.err06) msgs.push(`<b>No se pudo leer el formulario del repartidor (${esc(S.err06)}).</b> El Control 06 usa solo el formulario principal hasta que se pueda leer.`);
+    $('banner').hidden=!msgs.length; $('banner').innerHTML=msgs.join('<br>');
+    $('srcDetail').textContent=`Fuente: formulario principal (${main.length} cargas) y formulario del repartidor (${rep.length} entregas). Se relee cada ${CONFIG.REFRESH_SEC} s.`;
   }catch(e){
     S.error=e.message||'error';
     if(!S.rows.length||S.source==='demo'){S.rows=demoRows();S.source='demo';}
     $('banner').hidden=false;
-    $('banner').innerHTML=`<b>No se pudo leer la hoja de respuestas (${esc(S.error)}).</b> Se muestran datos de ejemplo. En Google Sheets: Compartir → Acceso general → «Cualquier persona con el enlace» como Lector. El tablero vuelve a intentar solo.`;
+    $('banner').innerHTML=`<b>No se pudo leer la hoja de respuestas (${esc(S.error)}).</b> Se muestran datos de ejemplo. El tablero vuelve a intentar solo.`;
     $('srcDetail').textContent='';
   }
   S.loading=false;S.next=Date.now()+CONFIG.REFRESH_SEC*1000;
   buildFilters();render();setChip();
 }
-$('fPeriod').onchange=e=>{S.period=e.target.value;render();};
+
+// Eventos de filtros
+$('p1Preset').onchange=e=>{S.p1.preset=e.target.value;syncDates();render();};
+$('p2Preset').onchange=e=>{S.p2.preset=e.target.value;syncDates();render();};
+['p1','p2'].forEach(p=>['From','To'].forEach(f=>$(p+f).onchange=e=>{S[p][f==='From'?'from':'to']=e.target.value;S[p].preset='custom';$(p+'Preset').value='custom';if(p==='p1')syncDates();render();}));
+$('cmpOn').onchange=e=>{S.cmp=e.target.checked;syncDates();render();};
 $('fTipo').onchange=e=>{S.tipo=e.target.value;buildFilters();render();};
 $('fServ').onchange=e=>{S.serv=e.target.value;render();};
+$('fRes').onchange=e=>{S.res=e.target.value;render();};
 $('btnRefresh').onclick=()=>refresh();
+$('btnXlsx').onclick=downloadXlsx;
+$('btnPdf').onclick=downloadPdf;
 matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change',()=>render());
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now()>S.next-5000)refresh();});
-setInterval(()=>{if(Date.now()>=S.next&&!document.hidden)refresh();else setChip();},1000);
+setInterval(()=>{if(Date.now()>=S.next&&!document.hidden&&!document.querySelector('.btn:disabled'))refresh();else setChip();},1000);
 refresh();
 </script>
 </body>
